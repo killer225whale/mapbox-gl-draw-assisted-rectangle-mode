@@ -1,5 +1,5 @@
 {
-  "name": "@geostarters/mapbox-gl-draw-rectangle-assisted-mode",
+  "name": "@geostarters/mapbox-gl-draw-assisted-rectangle-mode",
   "version": "3.0.4",
   "description": "A custom mode for MapboxGL Draw to draw a assisted rentangle",
   "main": "dist/DrawAssistedRectangle.js",

@@ -1,4 +1,3 @@
-
 const doubleClickZoom = {
   enable: ctx => {
     setTimeout(() => {
@@ -26,16 +25,13 @@ const doubleClickZoom = {
 };
 
 const DrawAssistedRectangle = {
-
-  onSetup: function (opts) {
+  onSetup: function(opts) {
     const rectangle = this.newFeature({
       type: "Feature",
       properties: {},
       geometry: {
         type: "Polygon",
-        coordinates: [
-          []
-        ]
+        coordinates: [[]]
       }
     });
     this.addFeature(rectangle);
@@ -54,19 +50,20 @@ const DrawAssistedRectangle = {
     };
   },
 
-  onTap: function (state, e) {
-
+  onTap: function(state, e) {
     this.onClick(state, e);
   },
 
-  onClick: function (state, e) {
-
+  onClick: function(state, e) {
     if (state.currentVertexPosition === 2) {
-
       const getpXY3 = this.calculatepXY3(state, e, false);
 
       if (getpXY3) {
-        state.rectangle.updateCoordinate(`0.${state.currentVertexPosition + 1}`, getpXY3[0], getpXY3[1]);
+        state.rectangle.updateCoordinate(
+          `0.${state.currentVertexPosition + 1}`,
+          getpXY3[0],
+          getpXY3[1]
+        );
       }
       this.updateUIClasses({
         mouse: "pointer"
@@ -74,116 +71,122 @@ const DrawAssistedRectangle = {
       return this.changeMode("simple_select", {
         featuresId: state.rectangle.id
       });
-
-
     } else {
-
-      state.rectangle.updateCoordinate(`0.${state.currentVertexPosition}`, e.lngLat.lng, e.lngLat.lat);
+      state.rectangle.updateCoordinate(
+        `0.${state.currentVertexPosition}`,
+        e.lngLat.lng,
+        e.lngLat.lat
+      );
       state.currentVertexPosition++;
-      state.rectangle.updateCoordinate(`0.${state.currentVertexPosition}`, e.lngLat.lng, e.lngLat.lat);
-
+      state.rectangle.updateCoordinate(
+        `0.${state.currentVertexPosition}`,
+        e.lngLat.lng,
+        e.lngLat.lat
+      );
     }
-
-
   },
-  onMouseMove: function (state, e) {
-
-    state.rectangle.updateCoordinate("0." + state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
+  onMouseMove: function(state, e) {
+    state.rectangle.updateCoordinate(
+      "0." + state.currentVertexPosition,
+      e.lngLat.lng,
+      e.lngLat.lat
+    );
     if (state.currentVertexPosition && state.currentVertexPosition > 0) {
-
       this.calculateOrientedAnglePolygon(state);
-
     }
 
     if (state.currentVertexPosition === 2) {
       const getpXY3 = this.calculatepXY3(state, e, true);
 
       if (getpXY3) {
-        state.rectangle.updateCoordinate("0." + (state.currentVertexPosition + 1), getpXY3[0], getpXY3[1]);
+        state.rectangle.updateCoordinate(
+          "0." + (state.currentVertexPosition + 1),
+          getpXY3[0],
+          getpXY3[1]
+        );
       }
     }
-
   },
 
-
-
-
-  deegrees2meters(px) {
-
+  degrees2meters(px) {
     //gist from https://gist.github.com/springmeyer/871897
-    const x = px[0] * 20037508.34 / 180;
-    let y = Math.log(Math.tan((90 + px[1]) * Math.PI / 360)) / (Math.PI / 180);
-    y = y * 20037508.34 / 180;
-    return [x, y]
-
+    const x = (px[0] * 20037508.34) / 180;
+    let y =
+      Math.log(Math.tan(((90 + px[1]) * Math.PI) / 360)) / (Math.PI / 180);
+    y = (y * 20037508.34) / 180;
+    return [x, y];
   },
 
-  meters2degress(px) {
+  meters2degrees(px) {
     //gist from https://gist.github.com/springmeyer/871897
-    const lon = px[0] * 180 / 20037508.34;
-    const lat = Math.atan(Math.exp(px[1] * Math.PI / 20037508.34)) * 360 / Math.PI - 90;
-    return [lon, lat]
+    const lon = (px[0] * 180) / 20037508.34;
+    const lat =
+      (Math.atan(Math.exp((px[1] * Math.PI) / 20037508.34)) * 360) / Math.PI -
+      90;
+    return [lon, lat];
   },
 
-  calculateOrientedAnglePolygon: function (state) {
+  calculateOrientedAnglePolygon: function(state) {
     const pXY0 = state.rectangle.getCoordinate("0.0");
-    const pXY0_3857 = this.deegrees2meters(pXY0);
+    const pXY0_3857 = this.degrees2meters(pXY0);
     const pXY1 = state.rectangle.getCoordinate("0.1");
-    const pXY1_3857 = this.deegrees2meters(pXY1);
-    const angleStdGraus = Math.atan2(pXY1_3857[1] - pXY0_3857[1], pXY1_3857[0] - pXY0_3857[0]) * 180 / Math.PI;
+    const pXY1_3857 = this.degrees2meters(pXY1);
+    const angleStdGraus =
+      (Math.atan2(pXY1_3857[1] - pXY0_3857[1], pXY1_3857[0] - pXY0_3857[0]) *
+        180) /
+      Math.PI;
 
     let angleSudGraus = -1.0 * (angleStdGraus + 90);
     const angle = angleSudGraus < 0 ? angleSudGraus + 360 : angleSudGraus;
 
-    state.angle = parseFloat((angle).toFixed(2));
-
+    state.angle = parseFloat(angle.toFixed(2));
   },
 
-  calculatepXY3: function (state, e, tmp) {
-
+  calculatepXY3: function(state, e, tmp) {
     const pXY0 = state.rectangle.getCoordinate("0.0");
-    const pXY0_3857 = this.deegrees2meters(pXY0);
+    const pXY0_3857 = this.degrees2meters(pXY0);
     const pXY1 = state.rectangle.getCoordinate("0.1");
-    const pXY1_3857 = this.deegrees2meters(pXY1);
-    let pXY2_3857 = this.deegrees2meters([e.lngLat.lng, e.lngLat.lat]);
-    const mouse_3857 = this.deegrees2meters([e.lngLat.lng, e.lngLat.lat]);
+    const pXY1_3857 = this.degrees2meters(pXY1);
+    let pXY2_3857 = this.degrees2meters([e.lngLat.lng, e.lngLat.lat]);
+    const mouse_3857 = this.degrees2meters([e.lngLat.lng, e.lngLat.lat]);
 
-    if (pXY0_3857[0] === pXY1_3857[0]) {
-      pXY2_3857 = [mouse_3857[0], pXY1_3857[1]];
-    } else if (pXY0_3857[1] === pXY1_3857[1]) {
-      pXY2_3857 = [pXY1_3857[0], mouse_3857[1]];
+    const vector1_3857 =
+      (pXY1_3857[1] - pXY0_3857[1]) / (pXY1_3857[0] - pXY0_3857[0]);
+    const vector2_3857 = -1.0 / vector1_3857;
 
-    } else {
+    //Equation 1: y = vector1_3857 * (x - mouse_3857[0]) + mouse_3857[1]
+    //Equation 2: y = vector2_3857 * (x - pXY1_3857[0]) + pXY1_3857[1]
+    //vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1] = vector2_3857 * (pXY2_3857[0] - pXY1_3857[0]) + pXY1_3857[1]
 
-      const vector1_3857 = (pXY1_3857[1] - pXY0_3857[1]) / (pXY1_3857[0] - pXY0_3857[0]);
-      const vector2_3857 = -1.0 / vector1_3857;
+    pXY2_3857[0] =
+      (vector1_3857 * mouse_3857[0] -
+        vector2_3857 * pXY1_3857[0] -
+        mouse_3857[1] +
+        pXY1_3857[1]) /
+      (vector1_3857 - vector2_3857);
+    pXY2_3857[1] =
+      vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1];
 
-      if (Math.abs(vector2_3857) < 1) {
-        pXY2_3857[1] = vector2_3857 * (mouse_3857[0] - pXY1_3857[0]) + pXY1_3857[1];
-      }
-      else {
-        pXY2_3857[0] = pXY1_3857[0] + (pXY2_3857[1] - pXY1_3857[1]) / vector2_3857;
-      }
-
-
-    }
-
-    const vector_3857 = [pXY1_3857[0] - pXY0_3857[0], pXY1_3857[1] - pXY0_3857[1]];
-    const pXY3_3857 = [pXY2_3857[0] - vector_3857[0], pXY2_3857[1] - vector_3857[1]];
-    const pXY2G = this.meters2degress(pXY2_3857);
-    const pXY3G = this.meters2degress(pXY3_3857);
+    const vector_3857 = [
+      pXY1_3857[0] - pXY0_3857[0],
+      pXY1_3857[1] - pXY0_3857[1]
+    ];
+    const pXY3_3857 = [
+      pXY2_3857[0] - vector_3857[0],
+      pXY2_3857[1] - vector_3857[1]
+    ];
+    const pXY2G = this.meters2degrees(pXY2_3857);
+    const pXY3G = this.meters2degrees(pXY3_3857);
     state.rectangle.updateCoordinate("0.2", pXY2G[0], pXY2G[1]);
     state.rectangle.updateCoordinate("0.3", pXY3G[0], pXY3G[1]);
 
     return pXY3G;
-
   },
 
-
-  onKeyUp: function (state, e) {
+  onKeyUp: function(state, e) {
     if (e.keyCode === 27) return this.changeMode("simple_select");
   },
-  onStop: function (state) {
+  onStop: function(state) {
     doubleClickZoom.enable(this);
     this.updateUIClasses({
       mouse: "none"
@@ -203,12 +206,16 @@ const DrawAssistedRectangle = {
       this.deleteFeature([state.rectangle.id], {
         silent: true
       });
-      this.changeMode("simple_select", {}, {
-        silent: true
-      });
+      this.changeMode(
+        "simple_select",
+        {},
+        {
+          silent: true
+        }
+      );
     }
   },
-  toDisplayFeatures: function (state, geojson, display) {
+  toDisplayFeatures: function(state, geojson, display) {
     const isActivePolygon = geojson.properties.id === state.rectangle.id;
     geojson.properties.active = isActivePolygon ? "true" : "false";
     geojson.properties.angle = state.angle;
@@ -218,7 +225,6 @@ const DrawAssistedRectangle = {
     const coordinateCount = geojson.geometry.coordinates[0].length;
 
     if (coordinateCount < 3) {
-
       const coordinates = geojson.geometry.coordinates[0][0];
 
       const vertexPoint = {
@@ -235,14 +241,18 @@ const DrawAssistedRectangle = {
         display(vertexPoint);
       }
 
-
       return;
     }
     if (coordinateCount >= 3 && coordinateCount <= 4) {
-
       const lineCoordinates = [
-        [geojson.geometry.coordinates[0][0][0], geojson.geometry.coordinates[0][0][1]],
-        [geojson.geometry.coordinates[0][1][0], geojson.geometry.coordinates[0][1][1]]
+        [
+          geojson.geometry.coordinates[0][0][0],
+          geojson.geometry.coordinates[0][0][1]
+        ],
+        [
+          geojson.geometry.coordinates[0][1][0],
+          geojson.geometry.coordinates[0][1][1]
+        ]
       ];
 
       display({
@@ -261,7 +271,7 @@ const DrawAssistedRectangle = {
 
     return display(geojson);
   },
-  onTrash: function (state) {
+  onTrash: function(state) {
     this.deleteFeature([state.rectangle.id], {
       silent: true
     });
