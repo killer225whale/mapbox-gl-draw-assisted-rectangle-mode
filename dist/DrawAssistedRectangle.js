@@ -53,6 +53,9 @@ var DrawAssistedRectangle = {
   },
 
   onClick: function onClick(state, e) {
+    if (this._ctx.options.cursorPreprocessor !== undefined) {
+      e = this._ctx.options.cursorPreprocessor(e);
+    }
     if (state.currentVertexPosition === 2) {
       var getpXY3 = this.calculatepXY3(state, e, false);
 
@@ -63,7 +66,7 @@ var DrawAssistedRectangle = {
         mouse: "pointer"
       });
       return this.changeMode("simple_select", {
-        featuresId: state.rectangle.id
+        featureIds: [state.rectangle.id]
       });
     } else {
       state.rectangle.updateCoordinate("0." + state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
@@ -72,6 +75,9 @@ var DrawAssistedRectangle = {
     }
   },
   onMouseMove: function onMouseMove(state, e) {
+    if (this._ctx.options.cursorPreprocessor !== undefined) {
+      e = this._ctx.options.cursorPreprocessor(e);
+    }
     state.rectangle.updateCoordinate("0." + state.currentVertexPosition, e.lngLat.lng, e.lngLat.lat);
     if (state.currentVertexPosition && state.currentVertexPosition > 0) {
       this.calculateOrientedAnglePolygon(state);
@@ -165,7 +171,7 @@ var DrawAssistedRectangle = {
       this.deleteFeature([state.rectangle.id], {
         silent: true
       });
-      this.changeMode("simple_select", {}, {
+      this.changeMode("simple_select", {
         silent: true
       });
     }

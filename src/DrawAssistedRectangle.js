@@ -55,6 +55,9 @@ const DrawAssistedRectangle = {
   },
 
   onClick: function(state, e) {
+    if (this._ctx.options.cursorPreprocessor !== undefined) {
+      e = this._ctx.options.cursorPreprocessor(e);
+    }
     if (state.currentVertexPosition === 2) {
       const getpXY3 = this.calculatepXY3(state, e, false);
 
@@ -69,7 +72,7 @@ const DrawAssistedRectangle = {
         mouse: "pointer"
       });
       return this.changeMode("simple_select", {
-        featuresId: state.rectangle.id
+        featureIds: [state.rectangle.id]
       });
     } else {
       state.rectangle.updateCoordinate(
@@ -86,6 +89,9 @@ const DrawAssistedRectangle = {
     }
   },
   onMouseMove: function(state, e) {
+    if (this._ctx.options.cursorPreprocessor !== undefined) {
+      e = this._ctx.options.cursorPreprocessor(e);
+    }
     state.rectangle.updateCoordinate(
       "0." + state.currentVertexPosition,
       e.lngLat.lng,
@@ -206,13 +212,9 @@ const DrawAssistedRectangle = {
       this.deleteFeature([state.rectangle.id], {
         silent: true
       });
-      this.changeMode(
-        "simple_select",
-        {},
-        {
-          silent: true
-        }
-      );
+      this.changeMode("simple_select", {
+        silent: true
+      });
     }
   },
   toDisplayFeatures: function(state, geojson, display) {
