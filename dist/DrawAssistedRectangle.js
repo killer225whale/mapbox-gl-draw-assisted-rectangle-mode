@@ -126,20 +126,31 @@ var DrawAssistedRectangle = {
     var pXY1 = state.rectangle.getCoordinate("0.1");
     var pXY1_3857 = this.degrees2meters(pXY1);
     var pXY2_3857 = this.degrees2meters([e.lngLat.lng, e.lngLat.lat]);
+    var pXY3_3857 = [];
     var mouse_3857 = this.degrees2meters([e.lngLat.lng, e.lngLat.lat]);
 
-    var vector1_3857 = (pXY1_3857[1] - pXY0_3857[1]) / (pXY1_3857[0] - pXY0_3857[0]);
-    var vector2_3857 = -1.0 / vector1_3857;
+    if (pXY1_3857[0] == pXY0_3857[0]) {
+      //Special case for initial vertical edge
+      pXY2_3857 = [mouse_3857[0], pXY1_3857[1]];
+      pXY3_3857 = [mouse_3857[0], pXY0_3857[1]];
+    } else if (pXY1_3857[1] == pXY0_3857[1]) {
+      //Special case for initial horizontal edge
+      pXY2_3857 = [pXY1_3857[0], mouse_3857[1]];
+      pXY3_3857 = [pXY0_3857[0], mouse_3857[1]];
+    } else {
+      var vector1_3857 = (pXY1_3857[1] - pXY0_3857[1]) / (pXY1_3857[0] - pXY0_3857[0]);
+      var vector2_3857 = -1.0 / vector1_3857;
 
-    //Equation 1: y = vector1_3857 * (x - mouse_3857[0]) + mouse_3857[1]
-    //Equation 2: y = vector2_3857 * (x - pXY1_3857[0]) + pXY1_3857[1]
-    //vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1] = vector2_3857 * (pXY2_3857[0] - pXY1_3857[0]) + pXY1_3857[1]
+      //Equation 1: y = vector1_3857 * (x - mouse_3857[0]) + mouse_3857[1]
+      //Equation 2: y = vector2_3857 * (x - pXY1_3857[0]) + pXY1_3857[1]
+      //vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1] = vector2_3857 * (pXY2_3857[0] - pXY1_3857[0]) + pXY1_3857[1]
 
-    pXY2_3857[0] = (vector1_3857 * mouse_3857[0] - vector2_3857 * pXY1_3857[0] - mouse_3857[1] + pXY1_3857[1]) / (vector1_3857 - vector2_3857);
-    pXY2_3857[1] = vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1];
+      pXY2_3857[0] = (vector1_3857 * mouse_3857[0] - vector2_3857 * pXY1_3857[0] - mouse_3857[1] + pXY1_3857[1]) / (vector1_3857 - vector2_3857);
+      pXY2_3857[1] = vector1_3857 * (pXY2_3857[0] - mouse_3857[0]) + mouse_3857[1];
 
-    var vector_3857 = [pXY1_3857[0] - pXY0_3857[0], pXY1_3857[1] - pXY0_3857[1]];
-    var pXY3_3857 = [pXY2_3857[0] - vector_3857[0], pXY2_3857[1] - vector_3857[1]];
+      var vector_3857 = [pXY1_3857[0] - pXY0_3857[0], pXY1_3857[1] - pXY0_3857[1]];
+      pXY3_3857 = [pXY2_3857[0] - vector_3857[0], pXY2_3857[1] - vector_3857[1]];
+    }
     var pXY2G = this.meters2degrees(pXY2_3857);
     var pXY3G = this.meters2degrees(pXY3_3857);
     state.rectangle.updateCoordinate("0.2", pXY2G[0], pXY2G[1]);
@@ -185,28 +196,48 @@ var DrawAssistedRectangle = {
 
     var coordinateCount = geojson.geometry.coordinates[0].length;
 
-    if (coordinateCount < 3) {
-      var coordinates = geojson.geometry.coordinates[0][0];
-
-      var vertexPoint = {
+    //Render the cursor point if there is a cursor preprocessor
+    if (coordinateCount > 1 && coordinateCount < 4 && this._ctx.options.cursorPreprocessor !== undefined) {
+      display({
         type: "Feature",
-        properties: geojson.properties,
+        properties: {
+          meta: "vertex",
+          parent: state.rectangle.id,
+          coord_path: "0." + c,
+          active: "true"
+        },
         angle: state.angle,
         geometry: {
-          coordinates: geojson.geometry.coordinates[0][0],
+          coordinates: geojson.geometry.coordinates[0][coordinateCount - 2],
           type: "Point"
         }
-      };
+      });
+    }
 
-      if (coordinates) {
-        display(vertexPoint);
-      }
+    //Display all other points
+    for (var c = 1; c < coordinateCount; c++) {
+      display({
+        type: "Feature",
+        properties: {
+          meta: "vertex",
+          parent: state.rectangle.id,
+          coord_path: "0." + c,
+          active: "false"
+        },
+        angle: state.angle,
+        geometry: {
+          coordinates: geojson.geometry.coordinates[0][c],
+          type: "Point"
+        }
+      });
+    }
 
+    if (coordinateCount < 3) {
       return;
     }
+
     if (coordinateCount >= 3 && coordinateCount <= 4) {
       var lineCoordinates = [[geojson.geometry.coordinates[0][0][0], geojson.geometry.coordinates[0][0][1]], [geojson.geometry.coordinates[0][1][0], geojson.geometry.coordinates[0][1][1]]];
-
       display({
         type: "Feature",
         properties: geojson.properties,
